@@ -3,7 +3,7 @@
 Local verification on 18 October 2026 (Asia/Kolkata):
 
 - Production frontend build succeeded.
-- All 20 automated tests passed, including ten basket/permission contracts and the billing reliability harness.
+- All 26 automated tests passed, including ten basket/permission contracts and the billing reliability harness.
 - A real AI-generated optimizer executed in CreateOS as an unprivileged user, exited 0, produced plan.json and passed 16 independent basket checks.
 - The full API flow passed against the real microVM: initial quote $13.16, stale price approval rejected, stockout recovery selected Fresh Lane at $13.59, repeated checkout returned the same simulated receipt, another browser session could not read the job, and evidence export succeeded.
 - The managed workspace monitor returned HTTP 200 through CreateOS public ingress.

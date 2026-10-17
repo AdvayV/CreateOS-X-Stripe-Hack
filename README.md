@@ -147,7 +147,7 @@ npm test
 npm run build
 ```
 
-**Verified on 18 October 2026:** all 20 automated tests passed. The real CreateOS end-to-end flow passed both locally and through public sandbox ingress, including price/stock recovery, approval invalidation, repeated checkout, session isolation and report export. The demonstrated basket passed 16 independent checks. Chromium observed all 108 offers and passed desktop/mobile checks with no page errors or horizontal overflow.
+**Verified on 18 October 2026:** all 26 automated tests passed. The real CreateOS end-to-end flow passed both locally and through public sandbox ingress, including price/stock recovery, approval invalidation, repeated checkout, session isolation and report export. The demonstrated basket passed 16 independent checks. Chromium observed all 108 offers and passed desktop/mobile checks with no page errors or horizontal overflow.
 
 To exercise the API flow against a running local server:
 

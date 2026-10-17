@@ -3,6 +3,7 @@ import http from'node:http';import fs from'node:fs/promises';import path from'no
 import{catalog,CATEGORY_LABELS}from'../shop/catalog.mjs';import{verifyBasket,assertSpend}from'../shop/verify.mjs';
 import{generateShoppingCode,aiStatus}from'./cart/ai.mjs';import{configured,executePlanner,pauseWorkspace,resumeWorkspace,workspaceStatus,startWorkspaceMonitor}from'./cart/sandbox.mjs';import{createLinkApproval,linkApprovalStatus}from'./cart/wallet.mjs';
 import{commerceStatus,chargeTestRehearsal}from'./commerce.mjs';
+import{requestOriginAllowed}from'./cart/origin.mjs';
 import{observeStorefronts}from'./cart/sandbox.mjs';
 await fs.mkdir('.rehearsal',{recursive:true});
 const db=new DatabaseSync('.rehearsal/cartpilot.db');db.exec('PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY,session_id TEXT NOT NULL,created_at INTEGER,payload TEXT NOT NULL); CREATE TABLE IF NOT EXISTS orders(intent TEXT PRIMARY KEY,session_id TEXT NOT NULL,payload TEXT NOT NULL)');
@@ -39,7 +40,7 @@ async function plan(job){planning=true;try{
 finally{planning=false;save(job);}}
 const server=http.createServer(async(req,res)=>{try{
   const url=new URL(req.url,'http://localhost'),sid=session(req,res);
-  if(req.method==='POST'&&req.headers.origin){let origin;try{origin=new URL(req.headers.origin);}catch{}if(!origin||origin.host!==req.headers.host)return send(res,403,{error:'Request origin is not allowed.'});}
+  if(req.method==='POST'&&!requestOriginAllowed(req.headers,process.env.PUBLIC_ORIGIN))return send(res,403,{error:'Request origin is not allowed.'});
   if(url.pathname==='/api/health')return send(res,200,{ok:true,product:'CartPilot',realPurchases:false});
   if(url.pathname==='/api/shop/bootstrap')return send(res,200,{...catalog(),categories:CATEGORY_LABELS,createos:configured(),ai:{configured:(process.env.CARTPILOT_AI_PROVIDER||'sandbox')==='sandbox'?configured():!!process.env.OPENAI_API_KEY,...await aiStatus()},wallet:{mode:'simulation',linkAvailable:process.env.PUBLIC_DEMO!=='true'&&process.env.CARTPILOT_LINK_ENABLED==='true',mppReady:commerceStatus().ready,realPurchases:false},study:'Blinkit-inspired quick-commerce study. Fictional merchants, demo prices and delivery estimates. No Blinkit affiliation or live ordering.'});
   if(url.pathname==='/api/shop/workspace')return send(res,200,await workspaceStatus());
