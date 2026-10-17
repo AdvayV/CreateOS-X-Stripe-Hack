@@ -1,0 +1,5 @@
+import dotenv from'dotenv';dotenv.config({quiet:true});
+const endpoint='https://api-createos.nodeops.network/mcp';let session;
+async function call(method,params){const headers={'Content-Type':'application/json',Accept:'application/json, text/event-stream','X-Api-Key':process.env.CREATEOS_PROJECT_API_KEY};if(session)headers['Mcp-Session-Id']=session;const r=await fetch(endpoint,{method:'POST',headers,signal:AbortSignal.timeout(20000),body:JSON.stringify({jsonrpc:'2.0',id:method,method,params})});session=r.headers.get('mcp-session-id')||session;const t=await r.text();if(!r.ok)throw Error('MCP HTTP '+r.status);try{return JSON.parse(t);}catch{const line=t.split('\n').findLast(l=>l.startsWith('data: '));return JSON.parse(line.slice(6));}}
+await call('initialize',{protocolVersion:'2025-03-26',capabilities:{},clientInfo:{name:'CartPilot deploy',version:'1.0'}});
+const x=await call('tools/list',{});console.log(JSON.stringify((x.result?.tools||[]).filter(t=>/environment|deployment/i.test(t.name)&&/update|assign|list/i.test(t.name)),null,2));

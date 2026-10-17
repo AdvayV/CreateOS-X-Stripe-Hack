@@ -9,7 +9,9 @@
     "pretest:cloud": "node scripts/build-runtime.mjs",
     "dev": "node scripts/dev.mjs",
     "build": "node scripts/build.mjs",
-    "start": "node --use-system-ca --use-env-proxy server/index.mjs",
+    "start": "node --use-system-ca --use-env-proxy server/cart-server.mjs",
+    "lab": "node --use-system-ca --use-env-proxy server/index.mjs",
+    "resume:demo": "node --use-system-ca --use-env-proxy scripts/cart-resume.mjs",
     "test": "node --test tests/*.test.mjs",
     "test:cloud": "node --use-system-ca --use-env-proxy scripts/cloud-smoke.mjs"
   },

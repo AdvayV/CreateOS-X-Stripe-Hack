@@ -1,109 +1,50 @@
-# Rehearsal
+# CartPilot
 
-**Your webhook returned 200. Did the right thing happen?**
+**Your errands. Your rules.** An agentic quick-commerce study built with CreateOS and Stripe Projects.
 
-Rehearsal executes Stripe billing handlers against ten failure scenarios,
-inspects durable SQLite evidence, and verifies repairs against independent checks.
-CreateOS runs candidate code. Stripe Projects provisions the integration.
+Tell the agent "movie night for four, peanut-free, under $35". It runs AI-written Python inside a persistent CreateOS microVM, compares three fictional merchants, verifies the basket independently, and asks permission before checkout. A price change or stockout invalidates permission and triggers replanning.
 
-An optional test-only commerce lane lets a buyer agent purchase a verification
-through **Link Agent Wallet + Stripe Machine Payments Protocol (MPP)**.
+Current sandbox demo: https://01m55q139gyy1y1x3m45qvt620-4173.app.sb.createos.sh
 
-## Run
+The separate hosting URL https://hackathon-cartpilot-advay.tyzo.nodeops.app is being reconciled by CreateOS; use the verified sandbox URL while that update is pending. The sandbox preview can sleep after inactivity and may need an operator resume.
 
-Requires Node.js 22.13+ (Node 24 recommended), npm and Git.
+## Run locally
 
-```sh
-npm ci
-npm run dev
-```
+Requires Node 24 and npm. Install with 'npm ci', then 'npm run build' and 'npm start'. Open http://localhost:4173. For development use 'npm run dev'.
 
-Open **http://localhost:4173**. For a production build served locally:
+Stripe Projects manages the ignored .env. Keep optional application settings in ignored .env.app; see .env.example. Never commit credentials. CreateOS credentials are required for shopping execution; the app does not silently simulate a successful sandbox run.
 
-```sh
-npm run build
-npm start
-```
+## What actually runs
 
-On Windows, use `npm.cmd` and `stripe.cmd` if PowerShell blocks script launchers.
+- 36 fictional products, 108 offers and three separately rendered merchant storefronts.
+- Optional Playwright Chromium in CreateOS observes the storefront DOM and downloads screenshots. Failures explicitly fall back to the labeled fixture catalog.
+- An isolated coding agent writes planner.py. The default uses the official OpenCode CLI and its free Big Pickle model. Successfully generated source persists in sandbox memory and is reused with fresh inputs. The UI distinguishes cached AI code, fresh generation and the bundled reference optimizer.
+- Generated Python executes as a separate unprivileged Linux user with a time limit. The SDK uploads files and downloads plan.json, stdout and exit status. Network egress is restricted; credentials stay outside the uploaded input.
+- The independent verifier checks canonical prices, stock, serving coverage, dietary rules, merchant, ETA, tax, fees and budget. Failed execution/verification can feed one repair attempt back to the coding agent.
+- The persistent microVM auto-pauses after five minutes of inactivity and resumes on demand. Optional explicit snapshotting is available; snapshot transitions can take several minutes.
+- Approval binds the exact basket digest, merchant, amount, budget and expiry. Price/stock fault injection invalidates the old approval. Checkout records a single simulated order per approved intent in SQLite.
+- Each browser session has isolated jobs. Evidence exports include code fingerprints, checks, execution output and the event journal.
 
-## Features and verification
+## Commerce status and boundaries
 
-- Ten executable scenarios: activation, duplicate delivery, different events for
-  one invoice, stale updates, concurrent workers, crash/retry, renewal grace and
-  recovery, scheduled cancellation, unpaid upgrades and forged signatures.
-- Separate processes, SQLite durability, controlled concurrency barriers, actual
-  post-commit worker termination and Stripe SDK signature verification.
-- Live scenario board, event journal, database evidence, code diff, presentation
-  mode, editable invoice amount and downloadable JSON reports.
-- A deliberately broken starter and bundled reference repair. The reference is
-  **not** presented as AI-generated code.
-- OpenAI Responses repair adapter with structured output and at most two attempts.
-  Paid AI calls are currently deferred; no live AI repair has been verified.
-- Test-only MPP seller endpoint with stable purchase IDs and live-key rejection.
-  The Link round trip awaits buyer authorization and seller test configuration.
+The default wallet is a **policy simulator**, not a Link wallet or Stripe payment. No real groceries are ordered. Blinkit is inspiration only; there is no affiliation, scraping or live Blinkit ordering.
 
-Verified: starter 2/10; reference 10/10 on CreateOS Node 24.21.0. Local tests also
-pass the reference at two invoice amounts. The end-to-end API flow and report
-download were checked. Native browser visual QA was unavailable in this session.
+The optional real test commerce lane uses the official Link Agent Wallet CLI and Stripe MPP. Seller configuration requires STRIPE_TEST_SECRET_KEY and STRIPE_TEST_PROFILE_ID (profile_test_). Live keys/profiles are rejected. Buyer Link authorization is separate from Stripe CLI/Projects authorization. Link is currently unavailable to the operator, and real test settlement has **not** been verified.
 
-## Credentials
+The public server never uses the operator's local Link authorization. A buyer can use their own authorized CLI against a fresh quote's MPP endpoint and quote capability. Do not share that capability publicly. The simulator remains usable without a payment account.
 
-Stripe Projects manages `.env`. Use `stripe projects env --pull`; do not hand-edit
-its managed files or publish credentials. The app accepts the provisioned
-CREATEOS_PROJECT_API_KEY, or CREATEOS_SANDBOX_API_KEY directly.
+## Configuration
 
-Put optional app settings in ignored **.env.app** or process environment; see
-[.env.example](.env.example). Keep the managed `.env` intact.
+- CARTPILOT_AI_ENABLED=true enables generation. The user approved a maximum $2 AI allowance; conservative reservations are tracked locally and in the persistent VM. The selected free provider reported $0 for the verified generation. No paid fallback is automatic.
+- CARTPILOT_SANDBOX_ID reuses one VM; auto-pause is enabled. The free account currently has one concurrent sandbox, so run local and hosted workloads sequentially.
+- CARTPILOT_BROWSER_OBSERVE=true and PUBLIC_ORIGIN enable observation of the configured CreateOS-hosted demo.
+- PUBLIC_DEMO=true disables local operator administration/wallet access. HOST defaults to loopback; the Docker image explicitly binds 0.0.0.0.
+- No plan upgrades, credit purchases or real purchases are automatic.
 
-- STRIPE_TEST_SECRET_KEY: sandbox key for importing/creating test billing fixtures.
-- STRIPE_TEST_PROFILE_ID: `profile_test_` ID for the optional MPP seller endpoint.
-- Link: authorize the buyer separately with `npx @stripe/link-cli auth login`.
-- OPENAI_API_KEY / OPENAI_MODEL: optional model configuration. Paid usage remains
-  blocked until separately approved and ALLOW_PAID_AI is enabled.
+## Verification and deployment
 
-The Connections page imports a paid test invoice or creates test-only billing
-objects with a simulated card. The CLI fallback needs an authorized sandbox
-context, separately from Projects' live-account context. Live keys are rejected.
+'npm test' runs 15 tests, including ten basket/approval contracts and the original billing reliability harness. 'node --use-system-ca --use-env-proxy scripts/cart-e2e.mjs' exercises real sandbox execution, stale approval, price/stock recovery, repeated checkout and session isolation against the local server. Set CARTPILOT_TEST_URL to use a hosted server instead.
 
-No real account API keys or production data are passed to candidate code.
+Build with 'npm run build'. The Dockerfile targets CreateOS hosting on port 4173. Deploy a clean source bundle; exclude .env files, .projects, .rehearsal, node_modules and local browser sessions. Provisioned provider access is managed through Stripe Projects; hosting deployment and environment assignment use CreateOS.
 
-## Agent commerce
-
-The Agent commerce page displays the buyer command and setup checklist. A configured
-seller returns HTTP 402, verifies an MPP test payment, then starts a CreateOS run.
-Wallet approval alone does not unlock the service. Repeating the same purchase ID
-returns the original run. Link availability is subject to Stripe eligibility.
-No successful Link payment round trip has yet been verified in this build.
-
-## Metered-use controls
-
-Ignored `.rehearsal/approvals.json` records this session's explicit permissions:
-CreateOS verification is allowed; paid AI calls are deferred. Each cloud suite
-reserves five minutes and refunds unused allowance after sandbox destruction.
-This is a conservative local runtime limit, not a provider-enforced billing cap.
-
-Paid AI requires both local `ai: true` approval and ALLOW_PAID_AI=true. Do not
-enable either without separate user permission. AI-generated code runs only in
-CreateOS; local execution is limited to bundled handlers.
-
-## Tests
-
-```sh
-npm test
-npm run test:cloud
-```
-
-Cloud tests consume credits and need local approval. Disposable VMs are destroyed
-after each suite; idle auto-pause and a five-minute deadline provide backstops.
-
-## Boundaries
-
-This prototype supports a defined handler contract, USD minor units and explicit
-business policies. Passing ten checks is not a production safety certification.
-Candidate writes are limited with Node permissions, which are defense in depth,
-not a security boundary for hostile JavaScript. The checker stays on the backend;
-CreateOS supplies VM isolation and restricted egress. Use synthetic/sanitized data.
-
-See [the brief](PROJECT_BRIEF.md), [scenario contract](scenarios/billing-scenarios.json)
-and [demo guide](DEMO.md).
+The earlier **Rehearsal** billing reliability lab remains at 'npm run lab', opening /?lab. See REHEARSAL.md. CartPilot is the main hackathon demo.

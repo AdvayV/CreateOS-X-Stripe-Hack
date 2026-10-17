@@ -1,0 +1,13 @@
+import test from'node:test';import assert from'node:assert/strict';import{catalog}from'../shop/catalog.mjs';import{verifyBasket,assertSpend}from'../shop/verify.mjs';
+const input=()=>({...catalog(),task:{budgetCents:3500,servings:4,maxDeliveryMinutes:25,avoid:['peanut'],vegan:false,slots:[{category:'snack',servings:4,label:'snacks'},{category:'drink',servings:4,label:'drinks'},{category:'sweet',servings:4,label:'sweets'}]}});
+const basket=()=>({merchantId:'flash',items:[{productId:'popcorn',quantity:1},{productId:'lemonade',quantity:1},{productId:'chocolate',quantity:1}]});
+test('Known basket passes canonical price, stock, allergy, fee and serving checks',()=>{assert.equal(verifyBasket(basket(),input()).valid,true);});
+test('Budget includes tax and merchant fees',()=>{const x=input(),q=verifyBasket(basket(),x);x.task.budgetCents=q.subtotal;assert.equal(verifyBasket(basket(),x).valid,false);});
+test('Peanut-containing substitution is rejected independently',()=>{const b=basket();b.items[0].productId='trail';assert.equal(verifyBasket(b,input()).valid,false);});
+test('Stock-out makes the current basket invalid',()=>{const x=input();x.offers.find(o=>o.productId==='popcorn'&&o.merchantId==='flash').stock=0;assert.equal(verifyBasket(basket(),x).valid,false);});
+test('Insufficient servings and duplicate item rows are rejected',()=>{const b=basket();b.items[0].productId='chips';assert.equal(verifyBasket(b,input()).valid,false);b.items.push({...b.items[1]});assert.equal(verifyBasket(b,input()).valid,false);});
+test('Missing approval cannot authorize checkout',()=>{assert.throws(()=>assertSpend(verifyBasket(basket(),input()),null),/Approve/);});
+test('Approval expires at its explicit deadline',()=>{const q=verifyBasket(basket(),input());assert.throws(()=>assertSpend(q,{digest:q.digest,amount:q.total,budget:3500,expiresAt:1000},1000),/expired/);});
+test('Price changes invalidate the quote even while below the spending limit',()=>{const x=input(),q=verifyBasket(basket(),x),approval={digest:q.digest,amount:q.total,budget:3500,expiresAt:Date.now()+60000};x.offers.find(o=>o.productId==='popcorn'&&o.merchantId==='flash').price+=10;assert.throws(()=>assertSpend(verifyBasket(basket(),x),approval),/changed/);});
+test('Switching merchant cannot reuse an approval',()=>{const q=verifyBasket(basket(),input()),b=basket();b.merchantId='fresh';assert.throws(()=>assertSpend(verifyBasket(b,input()),{digest:q.digest,amount:q.total,budget:3500,expiresAt:Date.now()+60000}),/changed/);});
+test('Fresh exact approval authorizes only the matching basket',()=>{const q=verifyBasket(basket(),input());assert.equal(assertSpend(q,{digest:q.digest,amount:q.total,budget:3500,expiresAt:Date.now()+60000}),true);});

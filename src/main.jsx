@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client';
 import { Activity, ArrowDownToLine, ArrowRight, ArrowUpRight, Braces, Check, CheckCheck, ChevronDown, ChevronRight, Clock3, Cloud, Code2, Copy, FileText, Fingerprint, FlaskConical, GitCompareArrows, Layers, LoaderCircle, LockKeyhole, Play, RefreshCw, ShieldCheck, Sparkles, Terminal, TriangleAlert, Wallet, Webhook, X, Zap } from 'lucide-react';
 import './styles.css';
 import './readability.css';
+import CartPilot from './CartPilot.jsx';
+import MerchantStore from './MerchantStore.jsx';
 const ICONS = [Zap, RefreshCw, Layers, GitCompareArrows, Braces, Terminal, Clock3, Clock3, ArrowUpRight, Fingerprint];
 const IMPACT = ['A paying customer receives the right plan.', 'One payment must never grant credits twice.', 'Different event IDs can represent one purchase.', 'A delayed event must not restore canceled access.', 'Two workers must not fulfill the same invoice.', 'A restart must preserve exactly-once effects.', 'Grace, suspension, then paid recovery.', 'Customers keep the time they already paid for.', 'An unpaid upgrade must not unlock pro.', 'Only authentic requests can grant access.'];
 const CATEGORY = ['Happy path', 'Delivery', 'Delivery', 'Ordering', 'Concurrency', 'Recovery', 'Lifecycle', 'Lifecycle', 'Lifecycle', 'Security'];
@@ -96,4 +98,5 @@ function App() {
     {toast && <div className="toast" role="status"><CheckCheck size={18}/>{toast}<button onClick={() => setToast('')} aria-label="Dismiss notification"><X size={15}/></button></div>}
   </div>;
 }
-createRoot(document.getElementById('root')).render(<App/>);
+const view=new URLSearchParams(location.search);
+createRoot(document.getElementById('root')).render(view.has('lab')?<App/>:view.has('merchant')?<MerchantStore id={view.get('merchant')}/>:<CartPilot/>);

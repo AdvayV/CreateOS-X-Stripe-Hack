@@ -1,51 +1,22 @@
-# Rehearsal demo guide
+# CartPilot demo guide
 
-## Core: 90 seconds
+1. Open https://01m55q139gyy1y1x3m45qvt620-4173.app.sb.createos.sh. Explain: "Our agent can choose a basket; it cannot choose its own spending permission."
+2. Use Movie night, four people, $35, no peanuts. Choose AI-generated optimizer (fast). Explain that this reuses source previously written by a real coding agent; choose fresh generation only when you have several minutes.
+3. Show the execution journal: code transfer, actual Python stdout, exit 0, three merchant candidates and independent validation. If enabled, show the CreateOS browser observation screenshots in Proof & receipts.
+4. Review the cheapest feasible basket including fees and tax. Approve in the explicitly labeled simulator.
+5. Before checkout, inject Price jumps $5. The old approval is invalid. Recover & replan; review the new merchant or basket. Repeat with Item sells out if time allows.
+6. Approve the fresh exact basket and complete simulated checkout. Show the single receipt and download the evidence report. No real order or payment occurs.
+7. Explain CreateOS: isolated generated-code execution, restricted egress, persistent optimizer memory, file artifacts, browser observation, and idle auto-pause and on-demand resume. The app itself is hosted on CreateOS.
 
-1. Open http://localhost:4173. Toggle presentation mode in the header.
-2. Explain: “HTTP 200 doesn't prove billing worked.” Choose local or CreateOS
-   execution; the interface always labels the actual environment.
-3. Run the deliberately flawed handler. Two baseline checks pass; eight expose
-   business failures. The source fixture is labeled synthetic until Stripe import.
-4. Expand Same invoice, new event: different event IDs fulfill the same purchase
-   twice. Expand Concurrent workers or Crash & retry to show actual fault evidence.
-5. Apply reference patch. State explicitly that this is a bundled example repair,
-   not an AI generation, while paid AI usage is deferred.
-6. All ten checks rerun against fresh state. Inspect the diff and database evidence.
-7. Change the invoice from $29.00 to $73.17 and rerun to demonstrate variable input.
-8. Download the JSON report. Its acceptance-contract hash is unchanged across repair.
+## Honest Stripe explanation
 
-## Link Agent Wallet + MPP
+Stripe Projects provisions provider access. The spend approval policies demonstrate the agentic-commerce boundary. Real Link Agent Wallet + Stripe MPP test settlement is optional, separately configured, and currently unverified because the operator cannot use Link. Never present the simulator as a verified Stripe/Link payment.
 
-The buyer agent purchases a ten-scenario verification for $0.50 in test mode.
-The customer approves through Link. The seller starts execution only after Stripe
-MPP payment verification, not simply after wallet approval.
+## Before presenting
 
-Prerequisites:
-
-- STRIPE_TEST_SECRET_KEY in ignored .env.app or process environment.
-- STRIPE_TEST_PROFILE_ID (`profile_test_`) for the seller.
-- Buyer Link OAuth authorization with payment_methods.agentic access.
-- Confirmed Link customer test eligibility and approved CreateOS allowance.
-
-Open Agent commerce, run its displayed buyer command, complete Link's actual
-approval, and retrieve the returned run/report URL. Retry the same purchase ID
-to demonstrate that the service does not launch a second execution.
-
-No Link payment round trip has yet been verified. If onboarding blocks it, label
-that setup as pending and demonstrate the verified core. Do not fabricate a
-payment receipt or substitute an animation for real authorization.
-
-## AI repair
-
-After separate paid-AI approval, enable the local AI allowance and ALLOW_PAID_AI.
-Use CreateOS, run baseline, then Generate AI repair. A generated candidate is
-checked against the same contract; one further repair attempt is allowed.
-Non-passing results remain non-passing on screen.
-
-## Verified
-
-- Local reference: 10/10 at $29.00 and $73.17.
-- CreateOS: starter 2/10, reference 10/10, both disposable sandboxes destroyed.
-- API: baseline, paid-AI guard, reference repair, report export and origin guard.
-- No paid AI calls or real payments were made.
+- Use the deployed Hackathon demo environment, not a production environment.
+- Test only one workload at a time; the free CreateOS account has one concurrent VM.
+- Idle auto-pause is enabled. Resume may take time if the VM has been inactive. Explicit snapshotting is optional and excluded from the fast demo path.
+- Keep browser cookies and the server process alive for the session. Hosted SQLite and screenshots are deployment-local and can disappear on redeploy; export evidence before replacing the deployment.
+- Do not display local environment files, OAuth credentials or quote payment capabilities on screen.
+- If merchant browsing fails, the journal labels fixture fallback. If code execution fails, the mission must show the error rather than a success receipt.
