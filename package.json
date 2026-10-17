@@ -4,15 +4,37 @@
   "private": true,
   "type": "module",
   "description": "CreateOS x Stripe hackathon agent",
+  "scripts": {
+    "pretest": "node scripts/build-runtime.mjs",
+    "pretest:cloud": "node scripts/build-runtime.mjs",
+    "dev": "node scripts/dev.mjs",
+    "build": "node scripts/build.mjs",
+    "start": "node --use-system-ca --use-env-proxy server/index.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:cloud": "node --use-system-ca --use-env-proxy scripts/cloud-smoke.mjs"
+  },
   "engines": {
     "node": ">=22"
   },
   "dependencies": {
-    "@nodeops-createos/sandbox": "^0.8.2"
+    "@nodeops-createos/sandbox": "^0.8.2",
+    "@stripe/link-cli": "^0.28.0",
+    "diff": "^9.0.0",
+    "dotenv": "^18.0.8",
+    "lucide-react": "^1.59.0",
+    "mppx": "^0.13.5",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "stripe": "^23.0.0"
   },
   "devDependencies": {
+    "@types/diff": "^7.0.2",
     "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "esbuild": "^0.28.2",
     "tsx": "^4.23.15",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4"
   }
 }

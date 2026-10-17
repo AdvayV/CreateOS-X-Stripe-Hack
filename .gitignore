@@ -1,6 +1,10 @@
 node_modules/
 dist/
 *.log
+.rehearsal/
+.runtime/
+playwright-report/
+test-results/
 
 .projects/cache
 .projects/vault

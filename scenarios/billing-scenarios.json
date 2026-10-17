@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "status": "implemented-and-verified-with-bundled-handlers",
+  "product": "Rehearsal",
+  "description": "Execute and repair Stripe billing handlers against independent business assertions.",
+  "policies": {
+    "currency": "usd",
+    "amountRepresentation": "integer minor units",
+    "renewalGracePeriodHours": 72,
+    "upgradeEntitlement": "retain current plan until the upgrade invoice is paid",
+    "scheduledCancellation": "retain access until the paid period ends",
+    "trialsAndAsyncPaymentMethods": "outside MVP scope",
+    "referenceState": "backend-controlled Stripe sandbox snapshot; never writable by the repair agent",
+    "unknownCustomerMapping": "no entitlement mutation; record for reconciliation",
+    "environment": "sandbox/test data only"
+  },
+  "globalAssertions": [
+    "An HTTP 2xx response alone is never evidence of business correctness.",
+    "Every entitlement mutation belongs to the correctly mapped customer and subscription.",
+    "Paid invoices produce at most one local fulfillment effect per invoice and effect type.",
+    "Amounts and currencies agree with the reference invoice; no floating-point money arithmetic.",
+    "Acknowledged events must be durably processed or durably queued.",
+    "Assertions, reference snapshots, virtual clock, fault controls and scoring remain outside candidate code control.",
+    "Every attempt starts with a restored fixture and a new candidate process.",
+    "Checker failure, missing evidence or timeout is not a pass."
+  ],
+  "scenarios": [
+    {
+      "id": "S01",
+      "name": "Successful subscription activation",
+      "fixture": "A mapped customer has a new subscription and an unpaid initial invoice.",
+      "steps": ["Deliver a signed invoice.paid event; reference invoice is paid and subscription is active."],
+      "assertions": ["Grant the expected plan to the correct customer.", "Create exactly one invoice fulfillment effect.", "Persist the correct invoice ID, subscription ID, amount and currency."],
+      "visibleFailure": "A paying customer has no access, incorrect access or an incorrect billing record."
+    },
+    {
+      "id": "S02",
+      "name": "Repeated delivery of the same event",
+      "fixture": "Use the same paid invoice and initial subscription as S01.",
+      "steps": ["Deliver the identical signed event three times sequentially, preserving its event ID."],
+      "assertions": ["Exactly one business effect is committed.", "Each subsequent delivery is handled safely without extending access or adding credits again."],
+      "visibleFailure": "One payment grants multiple credits or multiple access extensions."
+    },
+    {
+      "id": "S03",
+      "name": "Different events for the same paid invoice",
+      "fixture": "Two distinct invoice.paid event IDs reference the same invoice ID.",
+      "steps": ["Deliver both signed events sequentially."],
+      "assertions": ["Fulfillment is deduplicated by the business object and effect, not only by event ID.", "Exactly one fulfillment effect exists for this invoice."],
+      "visibleFailure": "Event-ID deduplication passes S02 but the customer is fulfilled twice here."
+    },
+    {
+      "id": "S04",
+      "name": "An old update arrives after cancellation",
+      "fixture": "Subscription access has ended; the authoritative subscription is canceled.",
+      "steps": ["Deliver customer.subscription.deleted.", "Deliver an older customer.subscription.updated snapshot showing active status."],
+      "assertions": ["Access remains revoked.", "Stale data cannot overwrite the authoritative terminal state.", "The implementation does not depend on delivery order or event.created alone."],
+      "visibleFailure": "The canceled customer regains access after a delayed event."
+    },
+    {
+      "id": "S05",
+      "name": "Concurrent deliveries race to fulfill",
+      "fixture": "Two workers share a durable store and receive the same paid invoice event.",
+      "steps": ["Use a harness-controlled synchronization barrier to overlap both attempts before committing the fulfillment effect."],
+      "assertions": ["Exactly one business effect survives the race.", "A losing worker safely acknowledges or retries.", "The final store has no conflicting records."],
+      "visibleFailure": "A check-then-insert race grants the purchase twice."
+    },
+    {
+      "id": "S06",
+      "name": "Process crash after commit and before acknowledgment",
+      "fixture": "The worker is handling a paid invoice against persistent storage.",
+      "steps": ["Commit fulfillment.", "Kill the candidate process before it can acknowledge the delivery.", "Start a fresh process and redeliver the same event."],
+      "assertions": ["Previously committed fulfillment survives the restart.", "The retry produces no duplicate fulfillment.", "Processing eventually reaches a durable completed state."],
+      "visibleFailure": "A retry either grants access twice or leaves processing permanently incomplete."
+    },
+    {
+      "id": "S07",
+      "name": "Failed renewal, grace expiry and payment recovery",
+      "fixture": "An existing subscriber reaches renewal with a failed invoice and a past_due subscription.",
+      "steps": ["Deliver invoice.payment_failed.", "Assert access remains available before the configured 72-hour grace deadline.", "Advance the harness clock beyond the deadline and run the scheduled reconciliation entry point.", "Assert access is suspended.", "Mark the reference invoice paid and subscription active, then deliver invoice.paid."],
+      "assertions": ["No paid fulfillment occurs for the failed invoice.", "Access follows the configured grace policy at each checkpoint.", "Successful recovery restores access once."],
+      "visibleFailure": "Access disappears immediately, persists indefinitely without payment, or fails to recover."
+    },
+    {
+      "id": "S08",
+      "name": "Cancellation at the end of the paid period",
+      "fixture": "An active subscription has a future paid-through deadline.",
+      "steps": ["Deliver customer.subscription.updated with cancel_at_period_end enabled.", "Assert access remains active before the deadline.", "Advance the harness clock to the deadline; update the reference subscription to canceled and deliver customer.subscription.deleted."],
+      "assertions": ["Scheduling cancellation does not revoke already-paid access early.", "Access ends at the expected deadline.", "The handler makes no unintended renewal or charge request."],
+      "visibleFailure": "A customer loses paid access early or keeps it after the subscription ends."
+    },
+    {
+      "id": "S09",
+      "name": "Plan upgrade waits for successful payment",
+      "fixture": "A basic subscriber requests a pro upgrade; a Stripe sandbox invoice snapshot supplies the proration amount.",
+      "steps": ["Present an unpaid upgrade invoice and a subscription update reflecting the pending change.", "Deliver an upgrade payment failure and check existing basic access.", "Mark the reference upgrade invoice paid and subscription pro, then deliver invoice.paid.", "Redeliver the paid event."],
+      "assertions": ["Do not grant pro access before upgrade payment succeeds.", "Failed upgrade payment does not remove already-paid basic access.", "After payment, grant pro exactly once.", "Use the reference invoice amount and currency rather than inventing a proration calculation."],
+      "visibleFailure": "An unpaid upgrade grants pro, removes basic access, or records the wrong amount."
+    },
+    {
+      "id": "S10",
+      "name": "Forged webhook cannot grant access",
+      "fixture": "The request claims that an invoice was paid but lacks a valid webhook signature.",
+      "steps": ["Send the exact raw payload with an invalid signature.", "Send a payload altered after signing."],
+      "assertions": ["Reject both requests at signature verification.", "No billing or entitlement state changes.", "No fulfillment entry is committed."],
+      "visibleFailure": "An attacker can fabricate payment success and receive access."
+    }
+  ]
+}
