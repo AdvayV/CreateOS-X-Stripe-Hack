@@ -1,0 +1,49 @@
+{
+  "version": 4,
+  "project": {
+    "catalog": "prod",
+    "initializedAt": "2026-10-17T18:23:39.248Z",
+    "merchantDisplayName": null,
+    "merchantId": "acct_1URSGTQ3mbF0AV4W",
+    "projectId": "project_61Vb0DyDcy3JpTNMu16VaqDp78SQKV4TMMyp8mUFcUWu",
+    "projectName": "Stripe CreateOS Hack"
+  },
+  "providers": {
+    "createos": {
+      "accountRequestId": "facctrq_61Vb0FmZLtnAxfYkq16VaqDp78SQKV4TMMyp8mUFcX2O",
+      "configuration": {},
+      "linkedAt": "2026-10-17T18:25:31.195Z",
+      "providerId": "prvdr_61V0eGC6sUPXoATb051se",
+      "providerName": "createos",
+      "redirectUrl": null,
+      "requestedAt": "2026-10-17T18:25:31.194Z",
+      "status": "complete"
+    }
+  },
+  "resources": {
+    "createos-plan": {
+      "configuration": {},
+      "createdAt": "2026-10-17T18:25:32.120Z",
+      "lastRevealedAt": "2026-10-17T18:25:32.514Z",
+      "lastStatus": "complete",
+      "livemode": true,
+      "name": "createos-plan",
+      "providerId": "prvdr_61V0eGC6sUPXoATb051se",
+      "providerName": "createos",
+      "resourceId": "fres_61Vb0FnySqQMAG6FB16VaqDp78SQKV4TMMyp8mUFcQum",
+      "serviceId": "free"
+    },
+    "createos-project": {
+      "configuration": {},
+      "createdAt": "2026-10-17T18:25:41.261Z",
+      "lastRevealedAt": "2026-10-17T18:25:41.659Z",
+      "lastStatus": "complete",
+      "livemode": true,
+      "name": "createos-project",
+      "providerId": "prvdr_61V0eGC6sUPXoATb051se",
+      "providerName": "createos",
+      "resourceId": "fres_61Vb0FwoDigyJJMI516VaqDp78SQKV4TMMyp8mUFcRBI",
+      "serviceId": "project"
+    }
+  }
+}
