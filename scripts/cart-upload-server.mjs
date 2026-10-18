@@ -5,7 +5,7 @@ console.log('Sandbox status: '+box.status);
 if(box.status==='pausing')await box.waitUntilPaused({timeoutMs:240000});
 if(box.status==='paused')await box.resume();await box.waitUntilRunning({timeoutMs:180000});
 const root='/tmp/cartpilot/app';
-for(const file of ['server/cart/origin.mjs','server/cart-server.mjs'])await box.files.upload(root+'/'+file,new Uint8Array(await fs.readFile(file)));
+for(const file of ['server/cart/origin.mjs','server/cart/planning.mjs','server/cart-server.mjs'])await box.files.upload(root+'/'+file,new Uint8Array(await fs.readFile(file)));
 const list=await box.processes.list();for(const p of list.processes||[])if(p.cwd===root&&!p.tree_exited)await box.processes.delete(p.process_id);
 const p=await box.processes.create({cmd:'node',args:['launch.mjs'],cwd:root});console.log('Updated application process: '+p.process_id);
 const origin=box.previewUrl(4173);
